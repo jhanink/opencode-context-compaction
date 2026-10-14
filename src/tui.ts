@@ -174,7 +174,7 @@ export default Plugin.define({
     // them here where they would drift.
     const loadStatus = async () => {
       try {
-        setStatus(await compaction.status())
+        setStatus(await compaction.status({}))
       } catch {
         // Server plugin absent or still starting: show usage without a budget.
       }

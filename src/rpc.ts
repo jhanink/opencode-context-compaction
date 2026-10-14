@@ -12,6 +12,14 @@ export const ContextCompaction = Rpc.define({
   methods: {
     /** Current settings, so the terminal shows the numbers actually in use. */
     status: {
+      // Deliberately an empty object schema rather than an omitted `input`:
+      // this server version dereferences the input schema even for
+      // argument-less methods, and a missing one throws internally.
+      input: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
       output: {
         type: "object",
         properties: {
