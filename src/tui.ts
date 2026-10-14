@@ -16,7 +16,7 @@
  * the file loads under the plugin runtime as-is.
  */
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js"
-import { createComponent, createElement, createTextNode, effect, insertNode, setProp } from "@opentui/solid"
+import { createComponent, createElement, effect, insert, setProp } from "@opentui/solid"
 import { Plugin } from "@opencode/plugin/tui"
 import { formatTokens } from "./lib.ts"
 import { ContextCompaction } from "./rpc.ts"
