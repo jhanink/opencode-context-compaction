@@ -121,6 +121,12 @@ node --test test/*.test.ts   # pure decision logic, no OpenCode needed
 `src/lib.ts` holds the rules and is free of OpenCode and Solid imports so it can
 be tested on its own; `src/index.ts` and `src/tui.ts` are thin adapters.
 
+OpenCode supplies `@opencode/plugin`, `@opentui/*` and `solid-js` at runtime, so
+they are declared as **optional** peer dependencies and installing this package
+fetches nothing else. (0.1.0 listed `@opencode/plugin` as a normal dependency,
+which pulled 424 packages into every install, including a deprecated `glob`
+with known advisories.)
+
 ## Prior art
 
 Closest neighbours, both worth reading before adopting this:
