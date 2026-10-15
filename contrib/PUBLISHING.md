@@ -7,8 +7,14 @@ misleading.
 The package was later renamed to the scoped name **`@jhanink/opencode-context-compaction`**.
 GitHub Packages only accepts scoped names whose scope is the account that owns the
 repo, and publishing a mirror there is the only way to make the repository page
-show a package box — see "GitHub Packages" below. The scoped name is the canonical
-distribution; the unscoped one is deprecated in its favour.
+show a package box — see "GitHub Packages" below. The scoped name is now the only
+distribution: the unscoped `opencode-context-compaction` was unpublished on
+2026-10-15, inside npm's 72-hour window, so `opencode plugin add opencode-context-compaction`
+now 404s rather than quietly installing the 0.1.0 tree.
+
+That does leave the unscoped name free for anyone else to claim. It is not worth
+defending — a squatter can only publish a package nobody is instructed to install —
+but it is why every install instruction in this repo is scoped.
 
 ## Why plain `npm publish` fails
 

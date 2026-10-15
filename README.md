@@ -59,8 +59,6 @@ Or as a package:
 opencode plugin add @jhanink/opencode-context-compaction
 ```
 
-The unscoped name `opencode-context-compaction` is deprecated and points here.
-
 ## Options
 
 Set options by loading the plugin from `opencode.json(c)` — and **do not** also
