@@ -44,11 +44,23 @@ during which publishing is blocked.
 
 ## Staged publishing, which is what we actually did
 
-A bypass-2FA granular token can *stage* but not publish directly:
+A bypass-2FA granular token can *stage* but not publish directly. **The token
+value never needs to change hands.** Put it in your own npm config once and let
+npm read it from there:
 
 ```sh
-printf '//registry.npmjs.org/:_authToken=%s\n' "$TOKEN" > /tmp/npmrc-publish
-npm stage publish --userconfig=/tmp/npmrc-publish
+# You run this. Writes ~/.npmrc (mode 600); the value never appears in a
+# command, a transcript, or a log line.
+npm config set //registry.npmjs.org/:_authToken "npm_…"
+
+npm stage publish
+```
+
+To keep the publish credential out of `~/.npmrc` entirely, point npm at a file
+you own rather than passing the value on a command line:
+
+```sh
+npm stage publish --userconfig="$HOME/.npmrc-publish"   # mode 600, not /tmp
 ```
 
 Staging does two things worth knowing:
@@ -74,12 +86,14 @@ list an npmjs.com package, however correct `repository` is. To get the box,
 publish the same tree a second time to `npm.pkg.github.com`:
 
 ```sh
-printf '@jhanink:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$GH_PAT" > /tmp/npmrc-gh
-npm publish --userconfig=/tmp/npmrc-gh
+# ~/.npmrc-gh (mode 600), written by you:
+#   @jhanink:registry=https://npm.pkg.github.com
+#   //npm.pkg.github.com/:_authToken=npm_…
+npm publish --userconfig="$HOME/.npmrc-gh"
 ```
 
-`GH_PAT` is a **GitHub** personal access token (classic) with `write:packages`
-— not the npm token. Requirements and caveats:
+The credential in that file is a **GitHub** personal access token (classic) with
+`write:packages` — not the npm token. Requirements and caveats:
 
 - The name must be scoped to the account that owns the repository, and
   `repository.url` must match the repo. Both are true here; this is why the
@@ -102,13 +116,18 @@ npm publish --userconfig=/tmp/npmrc-gh
    and confirm it reloads without a `failed to load plugin` line in
    `~/.local/share/opencode/log/opencode.log`.
 2. Bump `version` in `package.json`.
-3. `npm publish --dry-run` to check the packed file list (7 files, ~9.6 kB).
+3. `npm pack --dry-run` to check the packed file list — `src/`, `README.md` and
+   `LICENSE`, and nothing else.
 4. Stage, then approve.
 5. **Verify the published artifact by installing it somewhere disposable**, not
    by trusting the registry response: `npm i @jhanink/opencode-context-compaction@<version>`
    in a scratch directory, check the file list, and confirm `src/lib.ts` still
    behaves. This is what caught the 0.1.0 packaging bug below.
-6. Revoke any token that was pasted into a transcript or shell history.
+6. **Confirm no credential entered the session.** A token belongs in a config
+   file you own (`~/.npmrc`, mode 600) — never in a command line, a transcript,
+   or a `/tmp` file. Anything that reaches a session is persisted, and a
+   compacting session copies it forward into every later summary, so editing
+   history afterwards does not undo the copies. Revoke the token instead.
 
 ## Packaging: why `@opencode/plugin` is an optional peer
 
