@@ -63,20 +63,29 @@ The unscoped name `opencode-context-compaction` is deprecated and points here.
 
 ## Options
 
-Every option has a workable default, so most setups set none at all. Load the
-plugin from `opencode.json(c)` — and **do not** also leave a copy in the
-auto-discovered plugins directory, or two instances will each request compaction:
+Set options by loading the plugin from `opencode.json(c)` — and **do not** also
+leave a copy in the auto-discovered plugins directory, or two instances will each
+request compaction:
 
 ```jsonc
 {
   "plugins": [
-    { "package": "@jhanink/opencode-context-compaction" }
+    {
+      "package": "@jhanink/opencode-context-compaction",
+      "options": {
+        "maxTokens": 200000,
+        "idleMs": 60000
+      }
+    }
   ]
 }
 ```
 
-Add an `options` object to change any of these; only the keys you set are
-overridden:
+Those two are a better starting point than the defaults on a model with a
+1M-token window such as DeepSeek V4. Its built-in trigger sits out around 900k and
+cache reads are cheap, so there is little reason to compact early; the longer idle
+delay also keeps a short pause mid-task from reading as the end of one. Only the
+keys you set are overridden:
 
 | Option | Default | Meaning |
 | --- | --- | --- |
@@ -87,19 +96,8 @@ overridden:
 | `cooldownMs` | `600000` | Minimum gap between compactions of one session. |
 | `dryRun` | `false` | Log and notify instead of compacting. |
 
-To watch decisions for a day before letting it rewrite anything, set
-`"dryRun": true` — the toasts then tell you what it *would* have done:
-
-```jsonc
-{
-  "plugins": [
-    {
-      "package": "@jhanink/opencode-context-compaction",
-      "options": { "dryRun": true }
-    }
-  ]
-}
-```
+To watch decisions for a day before letting it rewrite anything, add
+`"dryRun": true` — the toasts then tell you what it *would* have done.
 
 ### Sizing `maxTokens`
 
