@@ -22,7 +22,7 @@ but it is why every install instruction in this repo is scoped.
 | --- | --- | --- |
 | 0.1.0 | 2026-10-15 | First publish, unscoped. `@opencode/plugin` was a normal dependency, pulling 424 packages into every install. |
 | 0.1.1 | 2026-10-15 | Renamed to `@jhanink/opencode-context-compaction`; runtime modules became optional peers; `publishConfig.access: public`. |
-| 0.1.2 | unreleased | Optional `history` (off by default) recording decisions and compactions, so the trigger can be evaluated against its own behaviour. |
+| 0.1.2 | 2026-10-15 | Optional `history` (off by default) recording decisions and compactions, so the trigger can be evaluated against its own behaviour. |
 
 ## Why plain `npm publish` fails
 
