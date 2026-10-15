@@ -4,6 +4,12 @@
 it got there, because the obvious command does not work and the failure is
 misleading.
 
+The package was later renamed to the scoped name **`@jhanink/opencode-context-compaction`**.
+GitHub Packages only accepts scoped names whose scope is the account that owns the
+repo, and publishing a mirror there is the only way to make the repository page
+show a package box — see "GitHub Packages" below. The scoped name is the canonical
+distribution; the unscoped one is deprecated in its favour.
+
 ## Why plain `npm publish` fails
 
 ```
@@ -34,9 +40,9 @@ npm stage publish --userconfig=/tmp/npmrc-publish
 Staging does two things worth knowing:
 
 1. It reserves the name with a `0.0.0-stage` placeholder. Until approval,
-   `npm view opencode-context-compaction version` reports `0.0.0-stage`, and an
-   install would fetch that stub. That residual version stays in the packument
-   afterwards; it is harmless because `latest` moves to the real version.
+   `npm view @jhanink/opencode-context-compaction version` reports `0.0.0-stage`,
+   and an install would fetch that stub. That residual version stays in the
+   packument afterwards; it is harmless because `latest` moves to the real version.
 2. It defers proof-of-presence to a human. Approval is the 2FA step:
 
 ```sh
@@ -46,6 +52,34 @@ npm stage approve <stage-id>     # interactive; prints a browser URL for the key
 or npmjs.com → the package → the staged version → **Approve**.
 
 Observed timing for 0.1.0: staged 01:49:21, live 01:50:14, `latest` → `0.1.0`.
+
+## GitHub Packages (the repository sidebar box)
+
+The package box on a repository page lists **GitHub Packages** only. It cannot
+list an npmjs.com package, however correct `repository` is. To get the box,
+publish the same tree a second time to `npm.pkg.github.com`:
+
+```sh
+printf '@jhanink:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$GH_PAT" > /tmp/npmrc-gh
+npm publish --userconfig=/tmp/npmrc-gh
+```
+
+`GH_PAT` is a **GitHub** personal access token (classic) with `write:packages`
+— not the npm token. Requirements and caveats:
+
+- The name must be scoped to the account that owns the repository, and
+  `repository.url` must match the repo. Both are true here; this is why the
+  rename to `@jhanink/opencode-context-compaction` happened.
+- Do **not** put `"registry": "https://npm.pkg.github.com"` in `publishConfig`.
+  It is applied to every publish, including the npmjs one, and would silently
+  send your real releases to the wrong registry. Pass `--userconfig`/`--registry`
+  per publish instead.
+- GitHub Packages requires authentication to install even **public** packages
+  (`E401` without a token in `.npmrc`), so this copy is a mirror for the sidebar,
+  not an install path. Send users to npmjs.
+- New packages default to private visibility; set the package to **Public** in
+  the repository's Packages settings if it is not already.
+- In CI, `GITHUB_TOKEN` with `packages: write` can publish this without any PAT.
 
 ## Release checklist
 
@@ -57,7 +91,7 @@ Observed timing for 0.1.0: staged 01:49:21, live 01:50:14, `latest` → `0.1.0`.
 3. `npm publish --dry-run` to check the packed file list (7 files, ~9.6 kB).
 4. Stage, then approve.
 5. **Verify the published artifact by installing it somewhere disposable**, not
-   by trusting the registry response: `npm i opencode-context-compaction@<version>`
+   by trusting the registry response: `npm i @jhanink/opencode-context-compaction@<version>`
    in a scratch directory, check the file list, and confirm `src/lib.ts` still
    behaves. This is what caught the 0.1.0 packaging bug below.
 6. Revoke any token that was pasted into a transcript or shell history.
@@ -87,8 +121,9 @@ It cannot publish the *first* version, because trusted publishers are configured
 on the package's own settings page. Hence the manual 0.1.x above. For 0.2.0
 onward:
 
-**Once, in the browser** — npmjs.com → Packages → `opencode-context-compaction`
-→ Settings → Trusted publishing → Add trusted publisher → GitHub Actions:
+**Once, in the browser** — npmjs.com → Packages →
+`@jhanink/opencode-context-compaction` → Settings → Trusted publishing → Add
+trusted publisher → GitHub Actions:
 
 | Field | Value |
 | --- | --- |

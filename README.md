@@ -56,8 +56,10 @@ reloads on its own.
 Or as a package:
 
 ```sh
-opencode plugin add opencode-context-compaction
+opencode plugin add @jhanink/opencode-context-compaction
 ```
+
+The unscoped name `opencode-context-compaction` is deprecated and points here.
 
 ## Options
 
@@ -69,7 +71,7 @@ instances will each request compaction:
 {
   "plugins": [
     {
-      "package": "opencode-context-compaction",
+      "package": "@jhanink/opencode-context-compaction",
       "options": {
         "maxTokens": 200000,
         "idleMs": 60000,
