@@ -63,25 +63,20 @@ The unscoped name `opencode-context-compaction` is deprecated and points here.
 
 ## Options
 
-Every option has a workable default, so an options object is only needed to change
-something. Load the plugin from `opencode.json(c)` with one — and **do not** also
-leave a copy in the auto-discovered plugins directory, or two instances will each
-request compaction:
+Every option has a workable default, so most setups set none at all. Load the
+plugin from `opencode.json(c)` — and **do not** also leave a copy in the
+auto-discovered plugins directory, or two instances will each request compaction:
 
 ```jsonc
 {
   "plugins": [
-    {
-      "package": "@jhanink/opencode-context-compaction",
-      "options": {
-        // defaults — listed so it is clear what you are changing
-        "maxTokens": 150000,
-        "idleMs": 45000
-      }
-    }
+    { "package": "@jhanink/opencode-context-compaction" }
   ]
 }
 ```
+
+Add an `options` object to change any of these; only the keys you set are
+overridden:
 
 | Option | Default | Meaning |
 | --- | --- | --- |
@@ -93,7 +88,18 @@ request compaction:
 | `dryRun` | `false` | Log and notify instead of compacting. |
 
 To watch decisions for a day before letting it rewrite anything, set
-`"dryRun": true`: the toasts then tell you what it *would* have done.
+`"dryRun": true` — the toasts then tell you what it *would* have done:
+
+```jsonc
+{
+  "plugins": [
+    {
+      "package": "@jhanink/opencode-context-compaction",
+      "options": { "dryRun": true }
+    }
+  ]
+}
+```
 
 ### Sizing `maxTokens`
 
