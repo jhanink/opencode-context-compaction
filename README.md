@@ -63,9 +63,10 @@ The unscoped name `opencode-context-compaction` is deprecated and points here.
 
 ## Options
 
-Set them by loading the plugin from `opencode.json(c)` with an options object —
-and **do not** also leave a copy in the auto-discovered plugins directory, or two
-instances will each request compaction:
+Every option has a workable default, so an options object is only needed to change
+something. Load the plugin from `opencode.json(c)` with one — and **do not** also
+leave a copy in the auto-discovered plugins directory, or two instances will each
+request compaction:
 
 ```jsonc
 {
@@ -73,9 +74,9 @@ instances will each request compaction:
     {
       "package": "@jhanink/opencode-context-compaction",
       "options": {
-        "maxTokens": 200000,
-        "idleMs": 60000,
-        "dryRun": true
+        // defaults — listed so it is clear what you are changing
+        "maxTokens": 150000,
+        "idleMs": 45000
       }
     }
   ]
@@ -91,8 +92,8 @@ instances will each request compaction:
 | `cooldownMs` | `600000` | Minimum gap between compactions of one session. |
 | `dryRun` | `false` | Log and notify instead of compacting. |
 
-Start with `dryRun: true` if you want to watch decisions for a day before letting
-it rewrite anything: the toasts tell you what it *would* have done.
+To watch decisions for a day before letting it rewrite anything, set
+`"dryRun": true`: the toasts then tell you what it *would* have done.
 
 ### Sizing `maxTokens`
 
