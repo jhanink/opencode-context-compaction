@@ -42,22 +42,66 @@ account recovery, not publishing.
 Note also: using a recovery code to authenticate triggers a **72-hour hold**
 during which publishing is blocked.
 
-## Staged publishing, which is what we actually did
+All of that concerns **direct** publishing. Direct publishing with granular
+tokens is being removed in **January 2027**, so the durable answer is not a
+bypass-2FA token but a **stage-only** token plus the staged flow below.
 
-A bypass-2FA granular token can *stage* but not publish directly. **The token
-value never needs to change hands.** Put it in your own npm config once and let
-npm read it from there:
+## The credential
+
+Three different things can sit in `~/.npmrc`, and confusing them wastes hours:
+
+| Kind | Where it comes from | Lifetime | In the UI? | Use it for |
+| --- | --- | --- | --- | --- |
+| Granular access token | Access Tokens → Generate New Token | you choose — write tokens max 90 days | yes | publishing |
+| **Stage-only** granular token | same, access = "Read and write (stage only)" | same | yes | `npm stage publish` ← what this repo uses |
+| `npm login` session token | running `npm login` | **two hours** | **no, by design** | one-off CLI work |
+
+Since December 2025 npm issues no long-lived classic tokens, and `npm login`
+hands out a two-hour **session** instead. Session tokens are deliberately hidden
+from both the web UI and `npm token list`, so a working `~/.npmrc` can hold a
+credential that appears nowhere — do not read an empty token list as an empty
+`~/.npmrc`, or assume the listed token is the one in use. To see which credential
+is actually authenticating, compare masks:
 
 ```sh
-# You run this. Writes ~/.npmrc (mode 600); the value never appears in a
-# command, a transcript, or a log line.
-npm config set //registry.npmjs.org/:_authToken "npm_…"
+npm whoami      # → jhanink
+npm token list  # the mask printed here should be the one in your file
+```
+
+Choose **stage-only**, and leave *Bypass 2FA* off. Stage-only cannot put a
+version on the registry without your interactive 2FA, so a leaked token cannot
+ship anything on its own — which is the whole point.
+
+Never paste a token into a chat or a command line. A session persists what it
+sees, and a compacting session copies it forward into every later summary, so
+scrubbing files afterwards does not undo it. Hand over a path, never a value.
+
+## Staged publishing, which is what we actually did
+
+A **stage-only** granular token can `npm stage publish` but cannot publish
+directly — that is the point of it. **The token value never changes hands.** You
+write it into a file you own, and npm reads it from there.
+
+Write it without echoing it and without touching shell history:
+
+```sh
+# You run this. The value is read at a prompt, so it lands in no command, no
+# transcript, no history file, and no log line.
+read -rs T
+[ ${#T} -eq 40 ] || echo "WARNING: unexpected length ${#T} — expected 40"
+printf '//registry.npmjs.org/:_authToken=%s\n' "$T" > ~/.npmrc
+chmod 600 ~/.npmrc
+unset T
 
 npm stage publish
 ```
 
-To keep the publish credential out of `~/.npmrc` entirely, point npm at a file
-you own rather than passing the value on a command line:
+(`npm config set //registry.npmjs.org/:_authToken "npm_…"` also works, but it puts
+the value on a command line, which lands in `~/.zsh_history` — the very leak the
+prompt avoids.)
+
+To keep the credential out of `~/.npmrc` entirely, point npm at a file you own
+instead:
 
 ```sh
 npm stage publish --userconfig="$HOME/.npmrc-publish"   # mode 600, not /tmp
@@ -118,16 +162,22 @@ The credential in that file is a **GitHub** personal access token (classic) with
 2. Bump `version` in `package.json`.
 3. `npm pack --dry-run` to check the packed file list — `src/`, `README.md` and
    `LICENSE`, and nothing else.
-4. Stage, then approve.
+4. Stage, then approve. Staging needs a stage-only token in `~/.npmrc` (see "The
+   credential"); approval is your interactive 2FA — `npm stage approve <stage-id>`,
+   or the browser.
 5. **Verify the published artifact by installing it somewhere disposable**, not
    by trusting the registry response: `npm i @jhanink/opencode-context-compaction@<version>`
    in a scratch directory, check the file list, and confirm `src/lib.ts` still
    behaves. This is what caught the 0.1.0 packaging bug below.
-6. **Confirm no credential entered the session.** A token belongs in a config
-   file you own (`~/.npmrc`, mode 600) — never in a command line, a transcript,
-   or a `/tmp` file. Anything that reaches a session is persisted, and a
-   compacting session copies it forward into every later summary, so editing
-   history afterwards does not undo the copies. Revoke the token instead.
+6. **Confirm no credential entered the session.** The value belongs in a file you
+   own (`~/.npmrc`, mode 600), written at a prompt — never on a command line, in
+   a transcript, or in a `/tmp` file. A command line lands in `~/.zsh_history`;
+   anything that reaches a session is persisted, and a compacting session copies
+   it forward into every later summary, so scrubbing afterwards does not undo the
+   copies. **Revoke and replace the token — that is the only remedy.**
+7. Before pushing, confirm no token shape reached the repo or the tarball:
+   `git log -p --all | grep -cE 'npm_[A-Za-z0-9]{30,}'` and the same grep over
+   `npm pack` output. Both should print `0`.
 
 ## Packaging: why `@opencode/plugin` is an optional peer
 
