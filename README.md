@@ -93,6 +93,7 @@ keys you set are overridden:
 | `idleMs` | `45000` | How long a session must be quiet before acting. |
 | `cooldownMs` | `600000` | Minimum gap between compactions of one session. |
 | `dryRun` | `false` | Log and notify instead of compacting. |
+| `history` | `false` | Record decisions and compactions in plugin storage. |
 
 To watch decisions for a day before letting it rewrite anything, add
 `"dryRun": true` — the toasts then tell you what it *would* have done.
@@ -103,13 +104,44 @@ Set it where a session stops being useful to you, not where the provider starts
 refusing it. Per-request cost is dominated by cache reads, which are cheap, so the
 real reasons to compact are transcript drift and the ceiling itself.
 
+## History
+
+Off by default. Records are written to plugin storage — which is OpenCode's
+database — so keeping them is a choice rather than a side effect. Set
+`"history": true` to record what the trigger decided, and every compaction that
+actually happened, including the ones OpenCode starts on its own.
+
+Both record types carry sizes and counts, never message content:
+
+| Record | Written when | Carries |
+| --- | --- | --- |
+| `decision` | the trigger evaluates a session | action, reason, estimated tokens, budget, dry run, gap since the last compaction |
+| `compaction` | a compaction begins | origin, estimated tokens, characters, message count, model |
+
+`origin` is the field worth having. OpenCode records *every* compaction in its
+own database as `reason: manual` — whether you asked for it, the built-in trigger
+did, or this plugin did — so without this the three are indistinguishable, and
+there is no way to tell whether a budget fires when it should.
+
+The records stay small because they do not duplicate what OpenCode already
+stores: the per-request token counts you would want alongside them are already in
+`opencode.db`. The newest 2,000 are kept, under the `history/` key prefix.
+
+To read them:
+
+```sh
+sqlite3 ~/.local/share/opencode/opencode.db \
+  "select key, value from kv where key like 'plugin:%history/%' order by key;"
+```
+
 ## How it works
 
 ```
-session.hook("context")  →  estimate tokens  →  debounce (idleMs)
-                                              →  decide (budget, cooldown, subagent)
-                                              →  ctx.session.compact({ delivery: "queue" })
-                                              →  RPC event  →  toast
+session.hook("context")     →  estimate tokens  →  debounce (idleMs)
+                                                 →  decide (budget, cooldown, subagent)
+                                                 →  ctx.session.compact({ delivery: "queue" })
+                                                 →  RPC event  →  toast
+session.hook("compaction")  →  attribute (rule | command | external)  →  history
 ```
 
 Estimated size is the serialized system parts and messages divided by

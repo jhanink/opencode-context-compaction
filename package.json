@@ -1,6 +1,6 @@
 {
   "name": "@jhanink/opencode-context-compaction",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Compact an OpenCode session on a token budget at idle, with a TUI status line and toasts.",
   "license": "MIT",

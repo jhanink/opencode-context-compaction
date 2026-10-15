@@ -217,6 +217,11 @@ export default Plugin.define({
         current ? `idle before acting: ${Math.round(current.idleMs / 1000)}s` : "",
         current ? `cooldown: ${Math.round(current.cooldownMs / 60_000)} min` : "",
         current?.dryRun ? "dry run: on (nothing is compacted)" : "",
+        current?.history
+          ? current.historyRecords === -1
+            ? "history: on (unreadable)"
+            : `history: on (${current.historyRecords ?? 0} recorded this run)`
+          : "",
         "",
         "/compact-now compacts immediately.",
       ].filter(Boolean)
